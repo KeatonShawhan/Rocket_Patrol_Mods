@@ -54,7 +54,7 @@ class Play extends Phaser.Scene {
         this.scoreLeft = this.add.text(borderUISize + borderPadding, borderUISize + borderPadding*2, this.p1Score, scoreConfig);
         // GAME OVER flag
         this.gameOver = false;
-
+        this.updated = false;
         // 60-second play clock
         scoreConfig.fixedWidth = 0;
         this.clock = this.time.delayedCall(60000, () => {
@@ -62,6 +62,14 @@ class Play extends Phaser.Scene {
             this.add.text(game.config.width/2, game.config.height/2 + 64, 'Press (R) to Restart or <- for Menu', scoreConfig).setOrigin(0.5);
             this.gameOver = true;
         }, null, this);
+
+        this.startingTime = game.settings.gameTimer;
+        this.timerDisplay = this.add.text(10, 10, this.formatTime(game.settings.gameTimer), {
+          fontFamily: 'Courier',
+          fontSize: '28px',
+          backgroundColor: '#FFFFFF',
+          color: '#000000'
+        });
     }
     update() {
         // check key input for restart
@@ -90,7 +98,21 @@ class Play extends Phaser.Scene {
         }
         if (this.gameOver && Phaser.Input.Keyboard.JustDown(keyLEFT)) {
             this.scene.start("menuScene");
+        }
+
+        if (!this.gameOver) {
+          game.settings.gameTimer -= 8.33;
+          this.timerDisplay.setText(this.formatTime(game.settings.gameTimer));
+          if (!this.updated && Math.floor(game.settings.gameTimer) <= this.startingTime-30000){
+            this.ship01.setSpeed(this.ship01.getSpeed()+1);
+            this.ship02.setSpeed(this.ship02.getSpeed()+1);
+            this.ship03.setSpeed(this.ship03.getSpeed()+1);
+            this.updated = true;
           }
+          if (game.settings.gameTimer <= 0) {
+              this.gameOver = true;
+          }
+        }
     }
     checkCollision(rocket, ship) {
         // simple AABB checking
@@ -119,4 +141,10 @@ class Play extends Phaser.Scene {
         this.scoreLeft.text = this.p1Score;
         this.sound.play('sfx_explosion');
     }
+    formatTime(ms) {
+      let seconds = Math.floor(ms / 1000);
+      let minutes = Math.floor(seconds / 60);
+      seconds = seconds - (minutes * 60);
+      return minutes.toString().padStart(2, '0') + ':' + seconds.toString().padStart(2, '0');
+  }
 }
