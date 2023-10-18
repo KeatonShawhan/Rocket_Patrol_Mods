@@ -8,11 +8,17 @@ class Play extends Phaser.Scene {
         this.load.image('spaceship', './assets/spaceship.png');
         this.load.image('starfield', './assets/starfield.png');
         this.load.image('ufo', './assets/ufo.png');
+        this.load.image('planet', './assets/planet.png');
         // load spritesheet
         this.load.spritesheet('explosion', './assets/explosion.png', {frameWidth: 64, frameHeight: 32, startFrame: 0, endFrame: 9});
     }
     create() {
+        this.randomHeights = [];
+        for (var i = 150; i < 400; i ++){
+          this.randomHeights.push(i);
+        }
         this.starfield = this.add.tileSprite(0, 0, 640, 480, 'starfield').setOrigin(0, 0);
+        this.planet = this.add.tileSprite(game.config.width, 200, 0, 0, 'planet').setOrigin(0,0);
         // green UI background
         this.add.rectangle(0, borderUISize + borderPadding, game.config.width, borderUISize * 2, 0x00FF00).setOrigin(0, 0);
         // white borders
@@ -66,8 +72,11 @@ class Play extends Phaser.Scene {
         this.updated = false;
         // 60-second play clock
         this.scoreConfig.fixedWidth = 0;
+        if (this.music && this.music.isPlaying) {
+          this.music.stop();
+      }
         this.music = this.sound.add('looping_music', {loop: true});
-        this.music.play();
+        this.music.play();      
         this.startingTime = game.settings.gameTimer;
         this.timerDisplay = this.add.text(10, 10, this.formatTime(game.settings.gameTimer), {
           fontFamily: 'Courier',
@@ -75,16 +84,28 @@ class Play extends Phaser.Scene {
           backgroundColor: '#FFFFFF',
           color: '#000000'
         });
+        this.shotdelay = 10000;
     }
     update() {
          // check key input for restart
         if (this.gameOver && Phaser.Input.Keyboard.JustDown(keyR)) {
             this.scene.restart();
+            this.game.settings.gameTimer = this.startingTime;
+            this.gameOver = false;
+            this.gameOverDisplayed = false;
         }
         if (this.updated){
           this.starfield.tilePositionX -= 4; // double the background speed when we hit 30 seconds of playtime
+          this.planet.x -= 8;
         }
         this.starfield.tilePositionX -= 4;
+        this.planet.x -= 8;
+        this.shotdelay -= 16.67;
+        if (this.shotdelay <= 0 && this.planet.x <= 0) {
+          this.planet.x = this.game.config.width;
+          this.shotdelay = 10000;
+          this.planet.y = Phaser.Utils.Array.GetRandom(this.randomHeights);
+        }
         if (!this.gameOver) {               
             this.p1Rocket.update();         // update rocket sprite
             this.ship01.update();           // update spaceships (x3)
@@ -114,7 +135,7 @@ class Play extends Phaser.Scene {
         }
 
         if (!this.gameOver) {
-          game.settings.gameTimer -= 8.33;
+          game.settings.gameTimer -= 16.67;
           this.timerDisplay.setText(this.formatTime(game.settings.gameTimer));
           if (!this.updated && Math.floor(game.settings.gameTimer) <= this.startingTime-30000){
             this.ship01.setSpeed(this.ship01.getSpeed()+1);
@@ -124,11 +145,17 @@ class Play extends Phaser.Scene {
             this.updated = true;
           }
           if (game.settings.gameTimer <= 0) {
-              this.add.text(game.config.width/2, game.config.height/2, 'GAME OVER', this.scoreConfig).setOrigin(0.5);
-              this.add.text(game.config.width/2, game.config.height/2 + 64, 'Press (R) to Restart or <- for Menu', this.scoreConfig).setOrigin(0.5);
-              this.game.settings.gameTimer = 0;
-              this.timerDisplay.setText(this.formatTime(game.settings.gameTimer));
-              this.gameOver = true;
+            if (!this.gameOverDisplayed) {
+                this.add.text(game.config.width/2, game.config.height/2, 'GAME OVER', this.scoreConfig).setOrigin(0.5);
+                this.add.text(game.config.width/2, game.config.height/2 + 64, 'Press (R) to Restart or <- for Menu', this.scoreConfig).setOrigin(0.5);
+                this.gameOverDisplayed = true;
+            }
+            this.game.settings.gameTimer = 0;
+            this.timerDisplay.setText(this.formatTime(game.settings.gameTimer));
+            this.gameOver = true;
+            this.events.on('shutdown', () => {
+                this.music.stop();
+            });            
           }
         }
     }
