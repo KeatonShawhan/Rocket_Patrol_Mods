@@ -38,6 +38,13 @@ class Play extends Phaser.Scene {
             frames: this.anims.generateFrameNumbers('explosion', { start: 0, end: 9, first: 0}),
             frameRate: 30
         });
+        this.explosionSounds = [
+          'sfx_explosion1',
+          'sfx_explosion2',
+          'sfx_explosion3',
+          'sfx_explosion4',
+          'sfx_explosion5'
+        ];
         // initialize score
         this.p1Score = 0;
         // display score
@@ -59,7 +66,8 @@ class Play extends Phaser.Scene {
         this.updated = false;
         // 60-second play clock
         this.scoreConfig.fixedWidth = 0;
-
+        this.music = this.sound.add('looping_music', {loop: true});
+        this.music.play();
         this.startingTime = game.settings.gameTimer;
         this.timerDisplay = this.add.text(10, 10, this.formatTime(game.settings.gameTimer), {
           fontFamily: 'Courier',
@@ -69,7 +77,7 @@ class Play extends Phaser.Scene {
         });
     }
     update() {
-        // check key input for restart
+         // check key input for restart
         if (this.gameOver && Phaser.Input.Keyboard.JustDown(keyR)) {
             this.scene.restart();
         }
@@ -150,7 +158,8 @@ class Play extends Phaser.Scene {
         this.p1Score += ship.points;
         this.game.settings.gameTimer += Math.floor(ship.points/10)*1000;
         this.scoreLeft.text = this.p1Score;
-        this.sound.play('sfx_explosion');
+        let randomSoundKey = Phaser.Utils.Array.GetRandom(this.explosionSounds);
+        this.sound.play(randomSoundKey);
     }
     ufoExplode(ship) {
       // temporarily hide ship
@@ -167,7 +176,8 @@ class Play extends Phaser.Scene {
       this.p1Score += ship.points;
       this.game.settings.gameTimer += Math.floor(ship.points/10)*1000;
       this.scoreLeft.text = this.p1Score;
-      this.sound.play('sfx_explosion');
+      let randomSoundKey = Phaser.Utils.Array.GetRandom(this.explosionSounds);
+      this.sound.play(randomSoundKey);
   }
     formatTime(ms) {
       let seconds = Math.floor(ms / 1000);
