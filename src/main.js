@@ -1,7 +1,7 @@
 /*
 Keaton Shawhan
 Rocket Patrol Mods
-Time Taken: ~8 hours
+Time Taken: ~8-10 hours
 Mods Chosen (20/20 Total Points):
   Allow the player to control the Rocket after it's fired (1)
   Display the time remaining (in seconds) on the screen (3)
